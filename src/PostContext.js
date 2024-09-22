@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useMemo, useState } from "react";
 
 function createRandomPost() {
   return {
@@ -7,7 +7,8 @@ function createRandomPost() {
     body: faker.hacker.phrase(),
   };
 }
-// 1. Create a context
+
+// 1) CREATE A CONTEXT
 const PostContext = createContext();
 
 function PostProvider({ children }) {
@@ -34,26 +35,26 @@ function PostProvider({ children }) {
     setPosts([]);
   }
 
+  const value = useMemo(() => {
+    return {
+      posts: searchedPosts,
+      onAddPost: handleAddPost,
+      onClearPosts: handleClearPosts,
+      searchQuery,
+      setSearchQuery,
+    };
+  }, [searchedPosts, searchQuery]);
+
   return (
-    <PostContext.Provider
-      value={{
-        posts: searchedPosts,
-        onAddPost: handleAddPost,
-        onClearPosts: handleClearPosts,
-        searchQuery,
-        setSearchQuery,
-      }}
-    >
-      {children}
-    </PostContext.Provider>
+    // 2) PROVIDE VALUE TO CHILD COMPONENTS
+    <PostContext.Provider value={value}>{children}</PostContext.Provider>
   );
 }
 
 function usePosts() {
   const context = useContext(PostContext);
-  if (!context) {
-    throw new Error("usePosts must be used within a PostProvider");
-  }
+  if (context === undefined)
+    throw new Error("PostContext was used outside of the PostProvider");
   return context;
 }
 
